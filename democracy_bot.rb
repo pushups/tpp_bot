@@ -11,12 +11,36 @@ OptionParser.new do |opts|
   end
 end.parse!
 
-bot = Cinch::Bot.new do
+class DemocracyBot < Cinch::Bot
+  attr_accessor :action_count
+  attr_accessor :last_action_time
+
+  def within_cooldown_window?
+    Time.now.millis - last_action_time < Tpp::TWITCH_ACTION_LIMIT_TIME_WINDOW
+  end
+
+  def self.reply_throttled(cinch_message, text)
+      if action_count < Tpp::TWITCH_ACTION_LIMIT - 1
+        cinch_message.reply text
+        @action_count += 1
+        @last_action_time = Time.now.millis
+      end
+
+      if !within_cooldown_window?
+        @action_count = 0
+      end
+  end
+
+  def initialize(test, &block)
+    super &block
+    @action_count = 0
+    @last_action_time = 0
+
     configure do |c|
       c.port = Tpp::CHAT_PORT
 
       # Connect to test server if options[:test]
-      if options[:test].nil?
+      if test.nil?
         c.user = ENV['TWITCH_USER']
         c.nick = ENV['TWITCH_USER']
         c.server = Tpp::TWITCH_CHAT_HOST
@@ -28,15 +52,19 @@ bot = Cinch::Bot.new do
         c.server = Tpp::TEST_HOST
         c.channels = [Tpp::TEST_CHANNEL]
       end
-
     end
 
     on :message, Tpp::PURE_COMMANDS[:democracy] do |m|
-      m.reply Tpp::PURE_COMMANDS[:democracy]
+      reply_throttled(m, Tpp::PURE_COMMANDS[:democracy])
     end
 
+    if block_given?
+      yield
+    end
+  end
 end
 
+bot = DemocracyBot.new options[:test]
 bot.start
 
 

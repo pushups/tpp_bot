@@ -6,6 +6,10 @@ module Tpp
   TEST_NAME = 'testbot'
   TPP_CHANNEL = '#twitchplayspokemon'
 
+  # Twenty actions, within 30 seconds
+  TWITCH_ACTION_LIMIT = 19
+  TWITCH_ACTION_LIMIT_TIME_WINDOW = 30 * 1000
+
   PURE_COMMANDS = {:a => 'a',
                    :b => 'b',
                    :start => 'start',
@@ -27,4 +31,5 @@ module Tpp
                                :right => /right\d*[\s|$]/,
                                :democracy => /democracy/,
                                :anarchy => /anarchy/}
+
 end
